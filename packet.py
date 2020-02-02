@@ -1,7 +1,8 @@
-from crc_itu import crc16
+from crccheck.crc import CrcX25
 from construct import *
 from construct.lib import *
 
+CRC_SECRET = b'xinsiwei&concox'
 
 class PacketParser:
     login = Struct(
@@ -100,25 +101,26 @@ class PacketParser:
 
     protocol = Struct(
         "start" / OneOf(Bytes(2), [b"\x78\x78", b"\x79\x79"]),
-        "length" / IfThenElse(this.start == b"\x78\x78", Int8ub, BytesInteger(2)),
-        "protocol" / Enum(Byte, login=0x01, heartbeat=0x23, response=0x21, location=0x32, alarm=0x33, command=0x80, information=0x98, default=Pass),
-        "data" / Switch(this.protocol,
-            {
-                "login": login,
-                "heartbeat": heartbeat,
-                "response": response,
-                "location": location,
-                "alarm": location,
-                "information": information,
-            },
-            default=Bytes(this.length - 1 - 2 - 2)
+        "fields" / RawCopy(Struct(
+            "length" / IfThenElse(this._.start == b"\x78\x78", Int8ub, BytesInteger(2)),
+            "protocol" / Enum(Byte, login=0x01, heartbeat=0x23, response=0x21, location=0x32, alarm=0x33, command=0x80, information=0x98, default=Pass),
+            "data" / Switch(this.protocol,
+                {
+                    "login": login,
+                    "heartbeat": heartbeat,
+                    "response": response,
+                    "location": location,
+                    "alarm": location,
+                    "information": information,
+                },
+                default=Bytes(this.length - 1 - 2 - 2)
+            ),
+            "serial" / Bytes(2),
+        )),
+        "crc" / Checksum(BytesInteger(2),
+            lambda data: CrcX25.calc(data),
+            lambda ctx: ctx.fields.data + CRC_SECRET if ctx.fields.value.protocol == 'login' else ctx.fields.data
         ),
-        "serial" / Bytes(2),
-        "crc" / Bytes(2),
-        #Checksum(Bytes(2),
-        #lambda data: crc16(data),
-        #lambda s: bytes([s.length]) + bytes([int(s.protocol)]) + s.data + s.serial
-        #),
         "end" / Const(b"\x0d\x0a")
     )
 
@@ -126,4 +128,4 @@ class PacketParser:
     #    # void
 
     def parse(self, packet):
-        return self.protocol.parse(packet)
+        return self.protocol.parse(packet).fields.value

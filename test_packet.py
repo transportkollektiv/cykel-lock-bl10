@@ -16,7 +16,7 @@ class ParsePacketTestCase(unittest.TestCase):
         parsed = self.pparse(packet)
         self.assertEqual(parsed.protocol, "login")
         self.assertEqual(binascii.hexlify(parsed.data.imei), b"0355951091349295")
-        self.assertEqual(parsed.data.model, "login")
+        self.assertEqual(parsed.data.model, b"\x36\x08")
 
     def test_login_manual_packet(self):
         # 78 78 11 01 08 68 12 01 48 37 35 71 36 05 32 02 00 39 DE F7 0D 0A
@@ -24,7 +24,7 @@ class ParsePacketTestCase(unittest.TestCase):
         parsed = self.pparse(packet)
         self.assertEqual(parsed.protocol, "login")
         self.assertEqual(binascii.hexlify(parsed.data.imei), b"0868120148373571")
-        self.assertEqual(parsed.data.model, "login")
+        self.assertEqual(parsed.data.model, b"\x36\x05")
 
     def test_information_packet(self):
         # 79 79 00 80 98 00 00 08 03 55 95 10 91 34 92 95 01 00 08 02 34 50 70 98 64 53 87 02 00 0a 89 44 50 03 07 18 64 53 87 9f 03 00 10 3c 0b f8 cf 8a 97 99 be 38 d5 28 a9 ea 79 1c 04 04 00 06 c4 a8 28 08 2c 40 05 00 06 30 30 30 30 30 30 06 00 10 20 57 2f 52 36 4b 3f 47 30 50 41 58 11 63 2d 2b 07 00 1d 47 42 31 31 30 5f 31 30 5f 41 31 44 45 5f 44 32 33 5f 52 30 5f 56 30 32 5f 57 49 46 49 00 03 07 91 0d 0a
