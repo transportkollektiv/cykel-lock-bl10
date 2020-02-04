@@ -6,8 +6,8 @@ class ParsePacketTestCase(unittest.TestCase):
     def pparse(self, packet):
         pp = PacketParser()
         parsed = pp.parse(packet)
-        print(binascii.hexlify(packet))
-        print(parsed)
+        #print(binascii.hexlify(packet))
+        #print(parsed)
         return parsed
 
     def test_login_packet(self):
@@ -56,9 +56,19 @@ class ParsePacketTestCase(unittest.TestCase):
         parsed = self.pparse(packet)
         self.assertEqual(parsed.protocol, "alarm")
 
+    def test_response_packet(self):
+        # 79 79 00 0D 21 00 00 00 00 01 4F 4B 21 00 07 A6 30 0D 0A
+        packet = b'\x79\x79\x00\x0D\x21\x00\x00\x00\x00\x01\x4F\x4B\x21\x00\x07\xA6\x30\x0D\x0A'
+        parsed = self.pparse(packet)
+        self.assertEqual(parsed.protocol, "response")
+        self.assertEqual(parsed.data.serverflag, b"\x00\x00\x00\x00")
+        self.assertEqual(parsed.data.encoding, "ascii")
+        self.assertEqual(parsed.data.content, b"\x4F\x4B\x21")
+        self.assertEqual(parsed.serial, b"\x00\x07")
+
     def test_login_response_packet(self):
         pp = PacketParser()
-        packet = pp.build(dict(start=b"\x78\x78", fields=dict(value=dict(length=1+6+1+0+2+2, protocol=0x01, data=PacketParser.login_response.build(dict(datetime=dict(year=17, month=3, day=20, hour=8, minute=56, second=57), reserved_length=0, reserved=0)), serial=0x39))))
+        packet = pp.build(dict(start=b"\x78\x78", fields=dict(value=dict(length=1+(6+1+0)+2+2, protocol=0x01, data=PacketParser.login_response.build(dict(datetime=dict(year=17, month=3, day=20, hour=8, minute=56, second=57), reserved_length=0, reserved=0)), serial=0x39))))
         self.assertEqual(packet, b'\x78\x78\x0C\x01\x11\x03\x14\x08\x38\x39\x00\x00\x39\x95\x70\x0D\x0A')
 
     def test_heartbeat_response_packet(self):
@@ -78,9 +88,11 @@ class ParsePacketTestCase(unittest.TestCase):
 
     def test_information_response_packet(self):
         pp = PacketParser()
-        packet = pp.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+2+2+1, protocol=0x98, data=bytes(1), serial=0))))
+        packet = pp.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+(1)+2+2, protocol=0x98, data=bytes(1), serial=0))))
         self.assertEqual(packet, b'\x79\x79\x00\x06\x98\x00\x00\x00\xC7\x00\x0D\x0A')
 
-    # TODO: online_command_response
-
-
+    def test_command_packet(self):
+        pp = PacketParser()
+        data = PacketParser.command.build(dict(length=4+7, serverflag=0, content=b"UNLOCK#"))
+        packet = pp.build(dict(start=b"\x78\x78", fields=dict(value=dict(length=1+(1+4+7)+2+2, protocol=0x80, data=data, serial=1))))
+        self.assertEqual(packet, b'\x78\x78\x11\x80\x0B\x00\x00\x00\x00\x55\x4E\x4C\x4F\x43\x4B\x23\x00\x01\x53\x54\x0D\x0A')

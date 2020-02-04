@@ -44,10 +44,17 @@ class PacketParser:
         "language" / Enum(Byte, chinese=0x01, english=0x02)
     )
 
+    command = Struct(
+        "length" / Byte,
+        "serverflag" / Bytes(4),
+        "content" / GreedyBytes #Bytes(this._.length - 1 - 4),
+        #"language" / Enum(Bytes(2), chinese=0x01, english=0x02) # FIXME ?! (documented in manual, not there in manual example)
+    )
+
     response = Struct(
-        "length" / Bytes(4),
+        "serverflag" / Bytes(4),
         "encoding" / Enum(Byte, ascii=0x01, utf16be=0x02),
-        "content" / GreedyBytes
+        "content" / Bytes(this._.length - 1 - 4 - 1 - 2 - 2)
     )
 
     gps = Struct(
@@ -115,7 +122,7 @@ class PacketParser:
     protocol = Struct(
         "start" / OneOf(Bytes(2), [b"\x78\x78", b"\x79\x79"]),
         "fields" / RawCopy(Struct(
-            "length" / IfThenElse(this._.start == b"\x78\x78", Int8ub, BytesInteger(2)),
+            "length" / IfThenElse(this._.start == b"\x78\x78", Int8ub, Int16ub),
             "protocol" / Enum(Byte, login=0x01, heartbeat=0x23, response=0x21, location=0x32, alarm=0x33, command=0x80, information=0x98, default=Pass),
             "data" / Switch(this.protocol,
                 {
