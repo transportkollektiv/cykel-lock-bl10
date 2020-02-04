@@ -135,7 +135,7 @@ class Packet:
                 },
                 default=Bytes(this.length - 1 - 2 - 2)
             ),
-            "serial" / Bytes(2),
+            "serial" / Int16ub,
         )),
         "crc" / Checksum(BytesInteger(2),
             lambda data: CrcX25.calc(data),

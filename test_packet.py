@@ -64,7 +64,7 @@ class PacketTestCase(unittest.TestCase):
         self.assertEqual(parsed.data.serverflag, b"\x00\x00\x00\x00")
         self.assertEqual(parsed.data.encoding, "ascii")
         self.assertEqual(parsed.data.content, b"\x4F\x4B\x21")
-        self.assertEqual(parsed.serial, b"\x00\x07")
+        self.assertEqual(parsed.serial, 7)
 
     def test_login_response_packet(self):
         pp = Packet()
