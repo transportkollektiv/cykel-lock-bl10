@@ -12,18 +12,30 @@ class BL10(LineReceiver):
         self.packet = Packet()
 
     def lineReceived(self, line):
-        print(line)
+        print("<== %s" % (line,))
         try:
             data = self.packet.parse(line + b'\r\n')
             print(data)
             print(data.protocol)
             if str(data.protocol) == 'login':
                 self.handleLogin(data)
+            elif str(data.protocol) == 'heartbeat':
+                self.handleHeartbeat(data)
+            elif str(data.protocol) == 'location':
+                self.handleLocation(data)
+            elif str(data.protocol) == 'alarm':
+                self.handleAlarm(data)
+            elif str(data.protocol) == 'information':
+                self.handleInformation(data)
             else:
                 self.handleUnknown(data)
         except Exception as e:
             print(e)
             pass
+
+    def write(self, data):
+        print("==> %s" % (data,))
+        self.transport.write(data)
 
     def handleLogin(self, data):
         print("login from %s (%s)" % (data.data.imei, data.data.model))
@@ -34,7 +46,27 @@ class BL10(LineReceiver):
         respdata = Packet.login_response.build(dict(datetime=dt, reserved_length=0, reserved=0))
         serial = data.serial + 1
         resp = self.packet.build(dict(start=b"\x78\x78", fields=dict(value=dict(length=1+(6+1+0)+2+2, protocol=0x01, data=respdata, serial=serial))))
-        self.transport.write(resp)
+        self.write(resp)
+
+    def handleHeartbeat(self, data):
+        serial = data.serial + 1
+        resp = self.packet.build(dict(start=b"\x78\x78", fields=dict(value=dict(length=1+2+2, protocol=0x23, data=bytes(), serial=serial))))
+        self.write(resp)
+
+    def handleLocation(self, data):
+        serial = data.serial + 1
+        resp = self.packet.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+2+2, protocol=0x32, data=bytes(), serial=serial))))
+        self.write(resp)
+
+    def handleAlarm(self, data):
+        serial = data.serial + 1
+        resp = self.packet.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+2+2, protocol=0x33, data=bytes(), serial=serial))))
+        self.write(resp)
+
+    def handleInformation(self, data):
+        serial = data.serial + 1
+        resp = self.packet.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+(1)+2+2, protocol=0x98, data=bytes(1), serial=serial))))
+        self.write(resp)
 
     def handleUnknown(self, data):
         print("Got unkown packet, protocol is %d" % (data.protocol,))
