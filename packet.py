@@ -4,7 +4,7 @@ from construct.lib import *
 
 CRC_SECRET = b'xinsiwei&concox'
 
-class PacketParser:
+class Packet:
     login = Struct(
         "imei" / Hex(Bytes(8)),
         "model" / Hex(Bytes(2)),

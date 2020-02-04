@@ -1,10 +1,10 @@
 import unittest
 import binascii
-from packet import PacketParser
+from packet import Packet
 
-class ParsePacketTestCase(unittest.TestCase):
+class PacketTestCase(unittest.TestCase):
     def pparse(self, packet):
-        pp = PacketParser()
+        pp = Packet()
         parsed = pp.parse(packet)
         #print(binascii.hexlify(packet))
         #print(parsed)
@@ -67,32 +67,32 @@ class ParsePacketTestCase(unittest.TestCase):
         self.assertEqual(parsed.serial, b"\x00\x07")
 
     def test_login_response_packet(self):
-        pp = PacketParser()
-        packet = pp.build(dict(start=b"\x78\x78", fields=dict(value=dict(length=1+(6+1+0)+2+2, protocol=0x01, data=PacketParser.login_response.build(dict(datetime=dict(year=17, month=3, day=20, hour=8, minute=56, second=57), reserved_length=0, reserved=0)), serial=0x39))))
+        pp = Packet()
+        packet = pp.build(dict(start=b"\x78\x78", fields=dict(value=dict(length=1+(6+1+0)+2+2, protocol=0x01, data=Packet.login_response.build(dict(datetime=dict(year=17, month=3, day=20, hour=8, minute=56, second=57), reserved_length=0, reserved=0)), serial=0x39))))
         self.assertEqual(packet, b'\x78\x78\x0C\x01\x11\x03\x14\x08\x38\x39\x00\x00\x39\x95\x70\x0D\x0A')
 
     def test_heartbeat_response_packet(self):
-        pp = PacketParser()
+        pp = Packet()
         packet = pp.build(dict(start=b"\x78\x78", fields=dict(value=dict(length=1+2+2, protocol=0x23, data=bytes(), serial=256))))
         self.assertEqual(packet, b'\x78\x78\x05\x23\x01\x00\x67\x0E\x0D\x0A')
 
     def test_location_response_packet(self):
-        pp = PacketParser()
+        pp = Packet()
         packet = pp.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+2+2, protocol=0x32, data=bytes(), serial=256))))
         self.assertEqual(packet, b'\x79\x79\x00\x05\x32\x01\x00\x8B\xEE\x0D\x0A')
 
     def test_alarm_response_packet(self):
-        pp = PacketParser()
+        pp = Packet()
         packet = pp.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+2+2, protocol=0x33, data=bytes(), serial=256))))
         self.assertEqual(packet, b'\x79\x79\x00\x05\x33\x01\x00\xD1\x32\x0D\x0A')
 
     def test_information_response_packet(self):
-        pp = PacketParser()
+        pp = Packet()
         packet = pp.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+(1)+2+2, protocol=0x98, data=bytes(1), serial=0))))
         self.assertEqual(packet, b'\x79\x79\x00\x06\x98\x00\x00\x00\xC7\x00\x0D\x0A')
 
     def test_command_packet(self):
-        pp = PacketParser()
-        data = PacketParser.command.build(dict(length=4+7, serverflag=0, content=b"UNLOCK#"))
+        pp = Packet()
+        data = Packet.command.build(dict(length=4+7, serverflag=0, content=b"UNLOCK#"))
         packet = pp.build(dict(start=b"\x78\x78", fields=dict(value=dict(length=1+(1+4+7)+2+2, protocol=0x80, data=data, serial=1))))
         self.assertEqual(packet, b'\x78\x78\x11\x80\x0B\x00\x00\x00\x00\x55\x4E\x4C\x4F\x43\x4B\x23\x00\x01\x53\x54\x0D\x0A')
