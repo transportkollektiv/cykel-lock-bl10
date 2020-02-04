@@ -16,6 +16,19 @@ class PacketParser:
         )
     )
 
+    login_response = Struct(
+        "datetime" / Struct(
+            "year" / Byte,
+            "month" / Byte,
+            "day" / Byte,
+            "hour" / Byte,
+            "minute" / Byte,
+            "second" / Byte
+        ),
+        "reserved_length" / Byte, #Rebuild(Byte, len_(this.reserved)),
+        "reserved" / If(this.reserved_length == 1, Byte)
+    )
+
     heartbeat = Struct(
         "tic" / BitStruct(
             Padding(1),
@@ -129,3 +142,6 @@ class PacketParser:
 
     def parse(self, packet):
         return self.protocol.parse(packet).fields.value
+
+    def build(self, packetdata):
+        return self.protocol.build(packetdata)
