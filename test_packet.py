@@ -37,6 +37,9 @@ class PacketTestCase(unittest.TestCase):
         packet = b"\x78\x78\x0b\x23\x00\x01\x66\x03\x00\x01\x00\x04\x5e\xac\x0d\x0a"
         parsed = self.pparse(packet)
         self.assertEqual(parsed.protocol, "heartbeat")
+        self.assertEqual(parsed.data.tic.locked, False)
+        self.assertEqual(parsed.data.voltage, 3.58)
+        self.assertEqual(parsed.data.signal, "good")
 
     def test_heartbeat_manual_packet(self):
         # 78 78 0B 23 C0 01 22 04 00 01 00 08 18 72 0D 0A

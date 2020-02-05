@@ -36,9 +36,12 @@ class Packet:
             Padding(3),
             "charge" / Flag,
             Padding(1),
-            "locked" / Flag # TEST
+            "locked" / Flag
         ),
-        "voltage" / Bytes(2),
+        "voltage" / ExprAdapter(Int16ub,
+            encoder = lambda obj, ctx: obj * 100,
+            decoder = lambda obj, ctx: obj / 100,
+        ),
         "signal" / Enum(Byte, none=0x00, extemely_weak=0x01, weak=0x02, good=0x03, strong=0x04),
         "extportstatus" / Byte,
         "language" / Enum(Byte, chinese=0x01, english=0x02)
