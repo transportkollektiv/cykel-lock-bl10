@@ -30,15 +30,17 @@ class Packet:
         )
     )
 
+    datetime = Struct(
+        "year" / Byte,
+        "month" / Byte,
+        "day" / Byte,
+        "hour" / Byte,
+        "minute" / Byte,
+        "second" / Byte
+    )
+
     login_response = Struct(
-        "datetime" / Struct(
-            "year" / Byte,
-            "month" / Byte,
-            "day" / Byte,
-            "hour" / Byte,
-            "minute" / Byte,
-            "second" / Byte
-        ),
+        "datetime" / datetime,
         "reserved_length" / Byte, #Rebuild(Byte, len_(this.reserved)),
         "reserved" / If(this.reserved_length == 1, Byte)
     )
@@ -114,7 +116,7 @@ class Packet:
     )
 
     location = Struct(
-        "datetime" / Bytes(6),
+        "datetime" / datetime,
         "gps_length" / Byte,
         "gps" / If(this.gps_length == 12, gps),
         "main_lbs_length" / Byte,
