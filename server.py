@@ -11,8 +11,16 @@ class BL10(LineReceiver):
     def __init__(self):
         self.packet = Packet()
 
+    def printPacket(self, direction, packet):
+        dt = datetime.utcnow().replace(tzinfo=timezone.utc).astimezone().replace(microsecond=0).isoformat()
+        if direction == '>':
+            direction = '==>'
+        else: 
+            direction = '<=='
+        print("%s %s %s" % (dt, direction, binascii.hexlify(packet), ))
+
     def lineReceived(self, line):
-        print("<== %s" % (line,))
+        self.printPacket("<", line)
         try:
             data = self.packet.parse(line + b'\r\n')
             print(data)
@@ -34,7 +42,7 @@ class BL10(LineReceiver):
             pass
 
     def write(self, data):
-        print("==> %s" % (data,))
+        self.printPacket(">", data)
         self.transport.write(data)
 
     def handleLogin(self, data):
