@@ -1,13 +1,27 @@
 from crccheck.crc import CrcX25
 from construct import *
 from construct.lib import *
+import binascii
 
 CRC_SECRET = b'xinsiwei&concox'
 
+class HexString(Hex):
+    def _decode(self, obj, context, path):
+        if isinstance(obj, bytes):
+            return HexDisplayedString(obj)
+        return super._decode(obj, context, path)
+
+class HexDisplayedString(bytes):
+    def __str__(self):
+        return binascii.hexlify(self).decode('ascii')
+
+    def __repr__(self):
+        return self.__str__()
+
 class Packet:
     login = Struct(
-        "imei" / Hex(Bytes(8)),
-        "model" / Hex(Bytes(2)),
+        "imei" / HexString(Bytes(8)),
+        "model" / HexString(Bytes(2)),
         "tzlg" / BitStruct(
             "tz" / BitsInteger(12),
             "gmt" / Enum(Bit, eastern=0, western=1),
