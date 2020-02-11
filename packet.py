@@ -78,8 +78,14 @@ class Packet:
 
     gps = Struct(
         "gps_satellites" / Byte,
-        "latitude" / Bytes(4),
-        "longitude" / Bytes(4),
+        "latitude" / ExprAdapter(Int32ub,
+            encoder = lambda obj, ctx: obj * 1800000,
+            decoder = lambda obj, ctx: obj / 1800000,
+        ),
+        "longitude" / ExprAdapter(Int32ub,
+            encoder = lambda obj, ctx: obj * 1800000,
+            decoder = lambda obj, ctx: obj / 1800000,
+        ),
         "speed" / Byte,
         "cs" / BitStruct(
             Padding(2),
