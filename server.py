@@ -21,6 +21,9 @@ headers = {
 if ENDPOINT_AUTH_HEADER is not '':
     headers['Authorization'] = ENDPOINT_AUTH_HEADER
 
+devices = dict()
+
+# FIXME handle connection close
 class BL10(LineReceiver):
     device_id = None
     serial = 0
@@ -78,6 +81,7 @@ class BL10(LineReceiver):
         self.write(resp)
 
         self.device_id = str(data.data.imei)
+        devices[self.device_id] = self
 
         update = {
             'device_id': self.device_id
@@ -162,6 +166,26 @@ def not_found(request, failure):
 @http.route('/')
 def home(request):
     return 'Hello, world!'
+
+@http.route('/list')
+def list(request):
+    return ','.join(devices.keys())
+
+@http.route('/<imei>/open', methods=['POST'])
+def lock_open(request, imei):
+    dev = devices.get(imei)
+    if dev is None:
+        raise NotFound()
+    dev.sendUnlock()
+    # FIXME: async, get confirmation from lock
+    return 'Unlocking %s!' % (imei,)
+
+@http.route('/<imei>')
+def lock(request, imei):
+    dev = devices.get(imei)
+    if dev is None:
+        raise NotFound()
+    return 'Hi %s!' % (imei,)
 
 bl10endpoint = endpoints.TCP4ServerEndpoint(reactor, LOCK_PORT, interface=HOST)
 bl10endpoint.listen(BL10Factory())
