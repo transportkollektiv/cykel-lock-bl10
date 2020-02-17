@@ -5,10 +5,13 @@ import jsons
 from datetime import datetime, timezone
 from twisted.internet import protocol, reactor, endpoints
 from twisted.protocols.basic import LineReceiver
+from twisted.web.server import Site
+from klein import Klein
 from packet import Packet
 
 HOST = os.environ.get('HOST', '127.0.0.1')
-PORT = int(os.environ.get('PORT', '21105'))
+PORT = int(os.environ.get('PORT', '8000'))
+LOCK_PORT = int(os.environ.get('LOCK_PORT', '21105'))
 ENDPOINT = os.environ['ENDPOINT']
 ENDPOINT_AUTH_HEADER = os.getenv('ENDPOINT_AUTH_HEADER', '')
 
@@ -127,6 +130,23 @@ class BL10Factory(protocol.Factory):
     def buildProtocol(self, addr):
         return BL10()
 
-endpoint = endpoints.TCP4ServerEndpoint(reactor, PORT, interface=HOST)
-endpoint.listen(BL10Factory())
+http = Klein()
+
+class NotFound(Exception):
+    pass
+
+@http.handle_errors(NotFound)
+def not_found(request, failure):
+    request.setResponseCode(404)
+    return 'Not found'
+
+@http.route('/')
+def home(request):
+    return 'Hello, world!'
+
+bl10endpoint = endpoints.TCP4ServerEndpoint(reactor, LOCK_PORT, interface=HOST)
+bl10endpoint.listen(BL10Factory())
+
+httpendpoint = endpoints.TCP4ServerEndpoint(reactor, PORT, interface=HOST)
+httpendpoint.listen(Site(http.resource()))
 reactor.run()

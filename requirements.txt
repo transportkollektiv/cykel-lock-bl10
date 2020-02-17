@@ -3,3 +3,4 @@ crccheck==0.6
 twisted==19.10.0
 requests==2.22.0
 jsons==1.1.1
+klein==19.6.0
