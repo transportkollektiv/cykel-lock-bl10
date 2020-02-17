@@ -23,6 +23,7 @@ if ENDPOINT_AUTH_HEADER is not '':
 
 class BL10(LineReceiver):
     device_id = None
+    serial = 0
 
     def __init__(self):
         self.packet = Packet()
@@ -42,6 +43,7 @@ class BL10(LineReceiver):
             print(data)
             proto = str(data.protocol)
             print(proto)
+            self.serial = data.serial
             if proto == 'login':
                 self.handleLogin(data)
             elif proto == 'heartbeat':
@@ -69,8 +71,8 @@ class BL10(LineReceiver):
         year = int(now.strftime("%y"))
         dt = dict(year=year, month=now.month, day=now.day, hour=now.hour, minute=now.minute, second=now.second)
         respdata = Packet.login_response.build(dict(datetime=dt, reserved_length=0, reserved=0))
-        serial = data.serial + 1
-        resp = self.packet.build(dict(start=b"\x78\x78", fields=dict(value=dict(length=1+(6+1+0)+2+2, protocol=0x01, data=respdata, serial=serial))))
+        self.serial += 1
+        resp = self.packet.build(dict(start=b"\x78\x78", fields=dict(value=dict(length=1+(6+1+0)+2+2, protocol=0x01, data=respdata, serial=self.serial))))
         self.write(resp)
 
         self.device_id = str(data.data.imei)
@@ -83,8 +85,8 @@ class BL10(LineReceiver):
         print(resp)
 
     def handleHeartbeat(self, data):
-        serial = data.serial + 1
-        resp = self.packet.build(dict(start=b"\x78\x78", fields=dict(value=dict(length=1+2+2, protocol=0x23, data=bytes(), serial=serial))))
+        self.serial += 1
+        resp = self.packet.build(dict(start=b"\x78\x78", fields=dict(value=dict(length=1+2+2, protocol=0x23, data=bytes(), serial=self.serial))))
         self.write(resp)
 
         update = {
@@ -96,8 +98,8 @@ class BL10(LineReceiver):
         print(resp)
 
     def handleLocation(self, data):
-        serial = data.serial + 1
-        resp = self.packet.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+2+2, protocol=0x32, data=bytes(), serial=serial))))
+        self.serial += 1
+        resp = self.packet.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+2+2, protocol=0x32, data=bytes(), serial=self.serial))))
         self.write(resp)
 
         update = {
@@ -114,16 +116,17 @@ class BL10(LineReceiver):
         print(resp)
 
     def handleAlarm(self, data):
-        serial = data.serial + 1
-        resp = self.packet.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+2+2, protocol=0x33, data=bytes(), serial=serial))))
+        self.serial += 1
+        resp = self.packet.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+2+2, protocol=0x33, data=bytes(), serial=self.serial))))
         self.write(resp)
 
     def handleInformation(self, data):
-        serial = data.serial + 1
-        resp = self.packet.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+(1)+2+2, protocol=0x98, data=bytes(1), serial=serial))))
+        self.serial += 1
+        resp = self.packet.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+(1)+2+2, protocol=0x98, data=bytes(1), serial=self.serial))))
         self.write(resp)
 
     def handleUnknown(self, data):
+        self.serial += 1
         print("Got unkown packet, protocol is %d" % (data.protocol,))
 
 class BL10Factory(protocol.Factory):
