@@ -54,6 +54,8 @@ class BL10(LineReceiver):
                 self.handleAlarm(data)
             elif proto == 'information':
                 self.handleInformation(data)
+            elif proto == 'response':
+                self.handleResponse(data)
             else:
                 self.handleUnknown(data)
         except Exception as e:
@@ -105,7 +107,7 @@ class BL10(LineReceiver):
         update = {
             'device_id': self.device_id
         }
-        
+
         if data.data.gps:
             # FIXME: something something with the data.data.gps.cs.latitude, data.data.gps.cs.longitude flags
             update['lat'] = data.data.gps.latitude
@@ -124,6 +126,10 @@ class BL10(LineReceiver):
         self.serial += 1
         resp = self.packet.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+(1)+2+2, protocol=0x98, data=bytes(1), serial=self.serial))))
         self.write(resp)
+
+    def handleResponse(self, data):
+        self.serial += 1
+        print("Got response: %s" % (data.data.content,))
 
     def handleUnknown(self, data):
         self.serial += 1
