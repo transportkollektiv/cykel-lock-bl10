@@ -135,6 +135,16 @@ class BL10(LineReceiver):
         self.serial += 1
         print("Got unkown packet, protocol is %d" % (data.protocol,))
 
+    def sendCommand(self, command):
+        length = len(command)
+        self.serial += 1
+        data = Packet.command.build(dict(length=4+length, serverflag=0, content=command))
+        resp = self.packet.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+(1+4+length)+2+2, protocol=0x80, data=data, serial=self.serial))))
+        self.write(resp)
+
+    def sendUnlock(self):
+        self.sendCommand(b"UNLOCK#")
+
 class BL10Factory(protocol.Factory):
     def buildProtocol(self, addr):
         return BL10()
