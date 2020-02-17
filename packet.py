@@ -20,7 +20,7 @@ class HexDisplayedString(bytes):
 
 class Packet:
     login = Struct(
-        "imei" / HexString(Bytes(8)),
+        "imei" / HexString(Bytes(8)), # FIXME: left-pad with zeroes
         "model" / HexString(Bytes(2)),
         "tzlg" / BitStruct(
             "tz" / BitsInteger(12),
