@@ -89,6 +89,7 @@ class BL10(LineReceiver):
         print(jsons.dumps(update))
         resp = requests.post(ENDPOINT, headers=headers, data=jsons.dumps(update))
         print(resp)
+        print(resp.text)
 
     def handleHeartbeat(self, data):
         self.serial += 1
@@ -102,6 +103,7 @@ class BL10(LineReceiver):
         print(jsons.dumps(update))
         resp = requests.post(ENDPOINT, headers=headers, data=jsons.dumps(update))
         print(resp)
+        print(resp.text)
 
     def handleLocation(self, data):
         self.serial += 1
@@ -120,6 +122,7 @@ class BL10(LineReceiver):
         print(jsons.dumps(update))
         resp = requests.post(ENDPOINT, headers=headers, data=jsons.dumps(update))
         print(resp)
+        print(resp.text)
 
     def handleAlarm(self, data):
         self.serial += 1
@@ -165,7 +168,7 @@ def not_found(request, failure):
 
 @http.route('/')
 def home(request):
-    return 'Hello, world!'
+    return 'Hello world!'
 
 @http.route('/list')
 def list(request):
@@ -173,6 +176,7 @@ def list(request):
 
 @http.route('/<imei>/open', methods=['POST'])
 def lock_open(request, imei):
+    print("unlock: %s" % (imei,))
     dev = devices.get(imei)
     if dev is None:
         raise NotFound()
