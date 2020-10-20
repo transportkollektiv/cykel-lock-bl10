@@ -174,15 +174,18 @@ def home(request):
 def list(request):
     return ','.join(devices.keys())
 
-@http.route('/<imei>/open', methods=['POST'])
+@http.route('/<imei>/unlock', methods=['POST'])
 def lock_open(request, imei):
     print("unlock: %s" % (imei,))
     dev = devices.get(imei)
     if dev is None:
         raise NotFound()
+    request.setHeader('Content-Type', 'application/json')
     dev.sendUnlock()
     # FIXME: async, get confirmation from lock
-    return 'Unlocking %s!' % (imei,)
+    data = {"success": True, "status": "pending"}
+    print(jsons.dumps(data))
+    return jsons.dumps(data)
 
 @http.route('/<imei>')
 def lock(request, imei):

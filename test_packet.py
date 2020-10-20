@@ -52,6 +52,8 @@ class PacketTestCase(unittest.TestCase):
         packet = b'\x79\x79\x00\x3e\x32\x14\x01\x1c\x11\x29\x11\x00\x09\x01\x06\x02\x1c\x42\x00\x6d\x3b\x19\x24\x1c\x42\x00\x44\x9a\x13\x1c\x42\x00\x44\x99\x08\x1c\x42\x00\x44\x9b\x06\x1c\x42\x00\x6d\x3a\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x84\x06\x0d\x0a'
         parsed = self.pparse(packet)
         self.assertEqual(parsed.protocol, "location")
+        self.assertEqual(parsed.data.gps_length, 0)
+        self.assertEqual(parsed.data.main_lbs_length, 9)
 
     def test_alarm_manual_packet(self):
         # 79 79 00 6F 33 11 03 14 09 06 08 00 09 01 CC 00 28 7D 00 1F 40 0E 24 28 7D 00 1F 71 07 28 7D 00 1E 3F 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 31 00 36 76 05 BB 5D 46 00 87 36 31 87 5B 48 CC 7B 35 36 61 A6 4C 00 E0 4B 8C BF 58 4F 78 A1 06 54 15 DE 4F 00 87 46 1B 9D 84 51 26 52 F3 AD B1 94 55 A1 00 00 08 38 B2 0D 0A
