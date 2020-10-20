@@ -196,7 +196,10 @@ def lock(request, imei):
 
 bl10endpoint = endpoints.TCP4ServerEndpoint(reactor, LOCK_PORT, interface=HOST)
 bl10endpoint.listen(BL10Factory())
+print("Listening for Lock Traffic on %s:%d" % (HOST, LOCK_PORT))
 
 httpendpoint = endpoints.TCP4ServerEndpoint(reactor, PORT, interface=HOST)
 httpendpoint.listen(Site(http.resource()))
+print("Listening for HTTP on %s:%d" % (HOST, PORT))
+
 reactor.run()
