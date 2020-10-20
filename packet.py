@@ -112,7 +112,7 @@ class Packet:
     )
 
     wifi = Struct(
-        "mac" / Bytes(6),
+        "mac" / HexString(Bytes(6)),
         "strength" / Byte,
     )
 
@@ -144,11 +144,20 @@ class Packet:
 
     information = GreedyRange(info) #RepeatUntil(lambda obj,lst,ctx: something_current_position, (ctx._.length - 1 - 2 - 2), info)
 
+    metrics = Struct(
+        "imei" / HexString(Bytes(8)),
+        "length" / Int16ub,
+        "proto" / Int8ub,
+        "unknown" / Int8ub,
+        "datetime" / datetime,
+        "content" / Bytes(this.length - 2 - 6)
+    )
+
     protocol = Struct(
         "start" / OneOf(Bytes(2), [b"\x78\x78", b"\x79\x79"]),
         "fields" / RawCopy(Struct(
             "length" / IfThenElse(this._.start == b"\x78\x78", Int8ub, Int16ub),
-            "protocol" / Enum(Byte, login=0x01, heartbeat=0x23, response=0x21, location=0x32, alarm=0x33, command=0x80, information=0x98, default=Pass),
+            "protocol" / Enum(Byte, login=0x01, heartbeat=0x23, response=0x21, location=0x32, alarm=0x33, command=0x80, information=0x98, metrics=0xFD, default=Pass),
             "data" / Switch(this.protocol,
                 {
                     "login": login,
@@ -157,6 +166,7 @@ class Packet:
                     "location": location,
                     "alarm": location,
                     "information": information,
+                    "metrics": metrics,
                 },
                 default=Bytes(this.length - 1 - 2 - 2)
             ),
