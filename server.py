@@ -11,6 +11,7 @@ from packet import Packet
 
 HOST = os.environ.get('HOST', '127.0.0.1')
 PORT = int(os.environ.get('PORT', '8000'))
+LOCK_HOST = os.environ.get('LOCK_HOST', HOST)
 LOCK_PORT = int(os.environ.get('LOCK_PORT', '21105'))
 ENDPOINT = os.environ['ENDPOINT']
 ENDPOINT_AUTH_HEADER = os.getenv('ENDPOINT_AUTH_HEADER', '')
@@ -196,7 +197,7 @@ def lock(request, imei):
 
 bl10endpoint = endpoints.TCP4ServerEndpoint(reactor, LOCK_PORT, interface=HOST)
 bl10endpoint.listen(BL10Factory())
-print("Listening for Lock Traffic on %s:%d" % (HOST, LOCK_PORT))
+print("Listening for Lock Traffic on %s:%d" % (LOCK_HOST, LOCK_PORT))
 
 httpendpoint = endpoints.TCP4ServerEndpoint(reactor, PORT, interface=HOST)
 httpendpoint.listen(Site(http.resource()))
