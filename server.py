@@ -2,7 +2,10 @@ import os
 import binascii
 import requests
 import jsons
+import time
 from datetime import datetime, timezone
+from prometheus_client import Gauge
+from prometheus_client.twisted import MetricsResource
 from twisted.internet import protocol, reactor, endpoints
 from twisted.protocols.basic import LineReceiver
 from twisted.web.server import Site
@@ -15,12 +18,22 @@ LOCK_HOST = os.environ.get('LOCK_HOST', HOST)
 LOCK_PORT = int(os.environ.get('LOCK_PORT', '21105'))
 ENDPOINT = os.environ['ENDPOINT']
 ENDPOINT_AUTH_HEADER = os.getenv('ENDPOINT_AUTH_HEADER', '')
+LABELS = os.getenv('LABELS', None)
 
 headers = {
     'Content-Type': 'application/json'
 }
 if ENDPOINT_AUTH_HEADER is not '':
     headers['Authorization'] = ENDPOINT_AUTH_HEADER
+
+promlabels = {}
+if LABELS is not None:
+    promlabels = dict(s.split('=') for s in LABELS.split(','))
+
+trackervoltgauge = Gauge('tracker_battery_volts', 'tracker battery voltage', ['device_id'] + list(promlabels.keys()))
+lockvoltgauge = Gauge('lock_battery_volts', 'lock battery voltage', ['device_id'] + list(promlabels.keys()))
+trackertimegauge = Gauge('tracker_last_data_update', 'tracker last data timestamp', ['device_id'] + list(promlabels.keys()))
+locktimegauge = Gauge('lock_last_data_update', 'lock last data timestamp', ['device_id'] + list(promlabels.keys()))
 
 devices = dict()
 
@@ -42,6 +55,10 @@ class BL10(LineReceiver):
 
     def lineReceived(self, line):
         self.printPacket("<", line)
+
+        lbl = { 'device_id': self.device_id, **promlabels }
+        locktimegauge.labels(**lbl).set(int(time.time()))
+
         try:
             data = self.packet.parse(line + b'\r\n')
             print(data)
@@ -97,6 +114,10 @@ class BL10(LineReceiver):
         resp = self.packet.build(dict(start=b"\x78\x78", fields=dict(value=dict(length=1+2+2, protocol=0x23, data=bytes(), serial=self.serial))))
         self.write(resp)
 
+        lbl = { 'device_id': self.device_id, **promlabels }
+        trackervoltgauge.labels(**lbl).set(data.data.voltage)
+        lockvoltgauge.labels(**lbl).set(data.data.voltage)
+
         update = {
             'device_id': self.device_id,
             'battery_voltage': data.data.voltage
@@ -110,6 +131,9 @@ class BL10(LineReceiver):
         self.serial += 1
         resp = self.packet.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+2+2, protocol=0x32, data=bytes(), serial=self.serial))))
         self.write(resp)
+
+        lbl = { 'device_id': self.device_id, **promlabels }
+        trackertimegauge.labels(**lbl).set(int(time.time()))
 
         update = {
             'device_id': self.device_id
@@ -170,6 +194,10 @@ def not_found(request, failure):
 @http.route('/')
 def home(request):
     return 'Hello world!'
+
+@http.route('/metrics')
+def metrics(request):
+    return MetricsResource()
 
 @http.route('/list')
 def list(request):
