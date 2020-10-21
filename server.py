@@ -195,7 +195,7 @@ def lock(request, imei):
         raise NotFound()
     return 'Hi %s!' % (imei,)
 
-bl10endpoint = endpoints.TCP4ServerEndpoint(reactor, LOCK_PORT, interface=HOST)
+bl10endpoint = endpoints.TCP4ServerEndpoint(reactor, LOCK_PORT, interface=LOCK_HOST)
 bl10endpoint.listen(BL10Factory())
 print("Listening for Lock Traffic on %s:%d" % (LOCK_HOST, LOCK_PORT))
 
