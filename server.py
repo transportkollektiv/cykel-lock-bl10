@@ -51,7 +51,7 @@ class BL10(LineReceiver):
             direction = '==>'
         else:
             direction = '<=='
-        print("%s %s %s" % (dt, direction, binascii.hexlify(packet), ))
+        print("%s [%s] %s %s" % (dt, self.device_id, direction, binascii.hexlify(packet), ))
 
     def lineReceived(self, line):
         self.printPacket("<", line)
