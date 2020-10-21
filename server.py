@@ -131,7 +131,9 @@ class BL10(LineReceiver):
         self.serial += 1
         resp = self.packet.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+2+2, protocol=0x32, data=bytes(), serial=self.serial))))
         self.write(resp)
+        self.submitLocation(data)
 
+    def submitLocation(self, data):
         lbl = { 'device_id': self.device_id, **promlabels }
         trackertimegauge.labels(**lbl).set(int(time.time()))
 
@@ -153,6 +155,7 @@ class BL10(LineReceiver):
         self.serial += 1
         resp = self.packet.build(dict(start=b"\x79\x79", fields=dict(value=dict(length=1+2+2, protocol=0x33, data=bytes(), serial=self.serial))))
         self.write(resp)
+        self.submitLocation(data)
 
     def handleInformation(self, data):
         self.serial += 1
