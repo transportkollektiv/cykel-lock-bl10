@@ -10,7 +10,7 @@ from twisted.internet import protocol, reactor, endpoints
 from twisted.protocols.basic import LineReceiver
 from twisted.web.server import Site
 from klein import Klein
-from packet import Packet
+from packet import Packet, DEFAULT_CRC_SECRET
 
 HOST = os.environ.get('HOST', '127.0.0.1')
 PORT = int(os.environ.get('PORT', '8000'))
@@ -19,6 +19,7 @@ LOCK_PORT = int(os.environ.get('LOCK_PORT', '21105'))
 ENDPOINT = os.environ['ENDPOINT']
 ENDPOINT_AUTH_HEADER = os.getenv('ENDPOINT_AUTH_HEADER', '')
 LABELS = os.getenv('LABELS', None)
+CRC_SECRET = os.getenv('CRC_SECRET', DEFAULT_CRC_SECRET)
 
 headers = {
     'Content-Type': 'application/json'
@@ -43,7 +44,7 @@ class BL10(LineReceiver):
     serial = 0
 
     def __init__(self):
-        self.packet = Packet()
+        self.packet = Packet(crc_secret=CRC_SECRET)
 
     def printPacket(self, direction, packet):
         dt = datetime.utcnow().replace(tzinfo=timezone.utc).astimezone().replace(microsecond=0).isoformat()
