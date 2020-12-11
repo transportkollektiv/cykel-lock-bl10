@@ -3,8 +3,8 @@ import binascii
 from packet import Packet
 
 class PacketTestCase(unittest.TestCase):
-    def pparse(self, packet):
-        pp = Packet()
+    def pparse(self, packet, instance=None):
+        pp = instance or Packet()
         parsed = pp.parse(packet)
         #print(binascii.hexlify(packet))
         #print(parsed)
@@ -14,6 +14,15 @@ class PacketTestCase(unittest.TestCase):
         # 78 78 11 01 03 55 95 10 91 34 92 95 36 08 00 02 00 02 08 97 0d 0a
         packet = b"\x78\x78\x11\x01\x03\x55\x95\x10\x91\x34\x92\x95\x36\x08\x00\x02\x00\x02\x08\x97\x0d\x0a"
         parsed = self.pparse(packet)
+        self.assertEqual(parsed.protocol, "login")
+        self.assertEqual(binascii.hexlify(parsed.data.imei), b"0355951091349295")
+        self.assertEqual(parsed.data.model, b"\x36\x08")
+
+    def test_login_packet_other_secret(self):
+        # FIXME: update protocol test with changed key
+        # 78 78 11 01 03 55 95 10 91 34 92 95 36 08 00 02 00 02 08 97 0d 0a
+        packet = b"\x78\x78\x11\x01\x03\x55\x95\x10\x91\x34\x92\x95\x36\x08\x00\x02\x00\x02\x08\x97\x0d\x0a"
+        parsed = self.pparse(packet, Packet(crc_secret='testsecret'))
         self.assertEqual(parsed.protocol, "login")
         self.assertEqual(binascii.hexlify(parsed.data.imei), b"0355951091349295")
         self.assertEqual(parsed.data.model, b"\x36\x08")

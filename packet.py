@@ -3,7 +3,7 @@ from construct import *
 from construct.lib import *
 import binascii
 
-CRC_SECRET = b'xinsiwei&concox'
+DEFAULT_CRC_SECRET = 'xinsiwei&concox'
 
 class HexString(Hex):
     def _decode(self, obj, context, path):
@@ -153,34 +153,34 @@ class Packet:
         "content" / Bytes(this.length - 2 - 6)
     )
 
-    protocol = Struct(
-        "start" / OneOf(Bytes(2), [b"\x78\x78", b"\x79\x79"]),
-        "fields" / RawCopy(Struct(
-            "length" / IfThenElse(this._.start == b"\x78\x78", Int8ub, Int16ub),
-            "protocol" / Enum(Byte, login=0x01, heartbeat=0x23, response=0x21, location=0x32, alarm=0x33, command=0x80, information=0x98, metrics=0xFD, default=Pass),
-            "data" / Switch(this.protocol,
-                {
-                    "login": login,
-                    "heartbeat": heartbeat,
-                    "response": response,
-                    "location": location,
-                    "alarm": location,
-                    "information": information,
-                    "metrics": metrics,
-                },
-                default=Bytes(this.length - 1 - 2 - 2)
+    def __init__(self, crc_secret=DEFAULT_CRC_SECRET):
+        self.crc_secret = crc_secret.encode('ascii')
+        self.protocol = Struct(
+            "start" / OneOf(Bytes(2), [b"\x78\x78", b"\x79\x79"]),
+            "fields" / RawCopy(Struct(
+                "length" / IfThenElse(this._.start == b"\x78\x78", Int8ub, Int16ub),
+                "protocol" / Enum(Byte, login=0x01, heartbeat=0x23, response=0x21, location=0x32, alarm=0x33, command=0x80, information=0x98, metrics=0xFD, default=Pass),
+                "data" / Switch(this.protocol,
+                    {
+                        "login": self.login,
+                        "heartbeat": self.heartbeat,
+                        "response": self.response,
+                        "location": self.location,
+                        "alarm": self.location,
+                        "information": self.information,
+                        "metrics": self.metrics,
+                    },
+                    default=Bytes(this.length - 1 - 2 - 2)
+                ),
+                "serial" / Int16ub,
+            )),
+            "crc" / Checksum(BytesInteger(2),
+                lambda data: CrcX25.calc(data),
+                lambda ctx: ctx.fields.data + self.crc_secret if ctx.fields.value.protocol == 'login' else ctx.fields.data
             ),
-            "serial" / Int16ub,
-        )),
-        "crc" / Checksum(BytesInteger(2),
-            lambda data: CrcX25.calc(data),
-            lambda ctx: ctx.fields.data + CRC_SECRET if ctx.fields.value.protocol == 'login' else ctx.fields.data
-        ),
-        "end" / Const(b"\x0d\x0a")
-    )
-
-    #def __init__(self):
-    #    # void
+            #"crc" / BytesInteger(2),
+            "end" / Const(b"\x0d\x0a")
+        )
 
     def parse(self, packet):
         return self.protocol.parse(packet).fields.value
