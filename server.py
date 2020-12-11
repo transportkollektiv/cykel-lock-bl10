@@ -180,6 +180,12 @@ class BL10(LineReceiver):
     def sendUnlock(self):
         self.sendCommand(b"UNLOCK#")
 
+    def ring(self):
+        self.sendCommand(b"SDFIND,ON,3,15,1#")
+
+    def locate(self):
+        self.sendCommand(b"LJDW#")
+
 class BL10Factory(protocol.Factory):
     def buildProtocol(self, addr):
         return BL10()
